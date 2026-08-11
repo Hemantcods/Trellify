@@ -7,9 +7,6 @@ const server = new WebSocketServer({ port: 3002 });
 const ROOMS: Record<string, { id: Number; socket: WebSocket }[]> = {};
 
 server.on("connection", (socket) => {
-  socket.send(JSON.stringify({
-    status:"joined sucessfully"
-  }))
   socket.on("message", (data) => {
     const parsedData = JSON.parse(data);
     
@@ -19,7 +16,6 @@ server.on("connection", (socket) => {
         ROOMS[boardId] = [];
       }
       const userId = Math.random();
-
       // tell exh joined ROOMS
       ROOMS[boardId].forEach(({ socket }) =>
         socket.send(
@@ -34,7 +30,7 @@ server.on("connection", (socket) => {
       socket.send(
         JSON.stringify({
           type: "initial_state",
-          users: ROOMS[boardId].filter((x) => x.id != userId).map((u) => u.id),
+          users: ROOMS[boardId].map((u) => u.id),
         }),
       );
     }
@@ -43,7 +39,7 @@ server.on("connection", (socket) => {
     Object.entries(ROOMS).map(([roomId, users]) => {
       const userExists=users.find(u => u.socket === socket)
       if (userExists){
-        users.filter(x => x.socket === socket)
+        ROOMS[roomId]=ROOMS[roomId].filter(x=>x.socket!=socket)
         users.forEach(({socket}) => {
           socket.send(JSON.stringify({
             type: "leave",

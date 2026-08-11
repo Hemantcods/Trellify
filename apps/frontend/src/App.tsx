@@ -24,13 +24,23 @@ function Board() {
         setusers(data.users)
       }
       if (data.type === "join") {
-        setusers(u=>[...u,data.user])
+        console.log("joined a new user")
+        setusers(u=>[...u,data.userId])
       } 
-      if (data.type=="leave") {
-        setusers(u=>u.filter(x=>x.id!=data.userId))
+      if (data.type == "leave") {
+        console.log("a user just leaved")
+        
+        setusers(u => u.filter(x => x !== data.userId))
+        console.log(users,data.userId)
       }
     }
-  })
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        type: "join",
+        boardId
+      }))
+    }
+  },[])
   
   return <div>
     roomId={ boardId}
