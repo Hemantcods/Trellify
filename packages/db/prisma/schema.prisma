@@ -7,8 +7,130 @@ datasource db {
   provider = "postgresql"
 }
 
+
+enum MembershipRoles{
+  OWNER
+  ADMIN
+  MEMBER
+}
+enum InvitationStatus{
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
 model User{
   id  String  @id   @default(uuid())
-  username String
-  password String
+  name String
+  email String @unique
+  passwordHash  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  // relations
+  memberships Membership[]
+  assignees IssueAssignee[]
+  comments Comment[]
+}
+model Organisation{
+  id String @id  @default(uuid())
+  name String
+  description String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  memberships Membership[]
+  invitations Invitation[]
+  boards Board[]
+}
+model Membership{
+  userId String
+  organisationId String
+  role MembershipRoles
+  createdAt DateTime  @default(now())
+  updatedAt DateTime @updatedAt
+  // relations
+  user         User           @relation(fields:[userId],references:[id],onDelete:Cascade)
+  organisation Organisation   @relation(fields:[organisationId],references:[id],onDelete:Cascade)
+  @@id([userId,organisationId])
+  @@index([organisationId])
+}
+model Invitation{
+  id String @id @default(uuid())
+  email String
+  organisationId String
+  token String @unique
+  expiresAt DateTime
+  status InvitationStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  // Relations
+  organisation Organisation @relation(fields:[organisationId],references:[id],onDelete:Cascade)
+  @@index([email])
+  @@index([organisationId])
+}
+model Board{
+  id String @id @default(uuid())
+  title String
+  organisationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  // relations
+  oganisation Organisation @relation(fields:[organisationId],references:[id],onDelete:Cascade) 
+  sections Section[]
+  issues Issue[]
+  @@index([organisationId])
+}
+model Section{
+  id String @id @default(uuid())
+  title String 
+  boardId String 
+  position Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // Relations
+  board Board @relation(fields:[boardId],references:[id],onDelete:Cascade)
+  issues Issue[]
+  @@index([boardId])
+  @@index([boardId,position])
+}
+model Issue{
+  id String @id @default(uuid())
+  title String 
+  description String?
+  
+  boardId String
+  sectionId String
+  position Int
+  createdAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // Relations
+  board Board @relation(fields:[boardId],references:[id],onDelete:Cascade)
+  section Section @relation(fields:[sectionId],references:[id],onDelete:Cascade)
+  assignees IssueAssignee[]
+  comments Comment[]
+}
+model IssueAssignee{
+  userId String
+  issueId String
+  // Relations
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  issue Issue @relation(fields:[issueId],references:[id],onDelete:Cascade)
+  @@id([userId,issueId])
+  @@index([issueId])
+}
+model Comment{
+  id String @id @default(uuid())
+  issueId String 
+  userId String 
+  content String 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // Relations
+  issue Issue @relation(fields:[issueId],references:[id],onDelete:Cascade)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([issueId])
+  @@index([userId])
 }
