@@ -1,4 +1,7 @@
+import { env } from "../../config/env";
 import { AppError } from "../../errors/AppError";
+import { googleOAuth2Client } from "../../lib/google";
+import { generateAccessToken } from "../../utils/jwt";
 import { hashPassword } from "../../utils/password";
 import { AuthRepository } from "./auth.repository";
 import type { SignupInput } from "shared";
@@ -18,6 +21,66 @@ export class AuthService {
     });
     return {
       user,
+    };
+  }
+  // google OAuth ur genraton function
+  getGoogleOAuthUrl() {
+    return googleOAuth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: ["openid", "email", "profile"],
+      prompt: "select_account",
+    });
+  }
+  // google redirect back with a code
+  async googleCallback(code: string) {
+    const { tokens } = await googleOAuth2Client.getToken(code);
+    if (!tokens.id_token) {
+      throw new AppError("Google Authentication failed", 401);
+    }
+    // create ticket
+    const ticket = await googleOAuth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload) {
+      throw new AppError("Invalid google Account");
+    }
+    const googleId = payload.sub;
+    const email = payload.email;
+    const name = payload.name;
+    // checks for info
+    if (!email || !name || !googleId) {
+      throw new AppError("Google Account Information is incomplete", 400);
+    }
+    if (payload.email_verified !== true) {
+      throw new AppError("Google email is not verified", 401);
+    }
+    let user = await this.authRepositoty.findUserByGoogleId(googleId);
+
+    if (!user) {
+      user = await this.authRepositoty.findUserByEmail(email);
+    }
+    // Existing Account
+    if (user) {
+      if (!user.googleId) {
+        user = await this.authRepositoty.linkGoogleAccount(user.id, googleId);
+      }
+    } else {
+      user = await this.authRepositoty.createGoogleUser({
+        name,
+        email,
+        googleId,
+      });
+    }
+    const accessToken = generateAccessToken(user.id);
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
     };
   }
 }

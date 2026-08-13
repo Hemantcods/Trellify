@@ -10,5 +10,8 @@ export class AuthController {
       data: user,
     });
   };
-  
+  google = async (req: Request, res: Response) => {
+    const url = this.authService.getGoogleOAuthUrl()
+    return res.redirect(url)
+  }
 }
