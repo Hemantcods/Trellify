@@ -60,4 +60,21 @@ export class AuthRepository {
       },
     });
   }
+  async findUserByRefreshToken(refreshToken: string) {
+    return prisma.user.findFirst({
+      where: {
+        refreshToken,
+      },
+    });
+  }
+  async clearRefreshToken(userId: string) {
+    return prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshToken: null,
+      },
+    });
+  }
 }

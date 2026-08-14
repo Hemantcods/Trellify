@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
-import { setAuthCookie } from "../../utils/cookie";
+import { clearAuthCookie, setAuthCookie } from "../../utils/cookie";
 import { env } from "../../config/env";
 import { GoogleCallbackInput } from "shared";
+import { AppError } from "../../errors/AppError";
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
   signup = async (req: Request, res: Response) => {
-    const user = await this.authService.singup(req.body);
+    const user = await this.authService.signup(req.body);
     res.status(200).json({
       success: true,
       data: user,
@@ -32,5 +33,28 @@ export class AuthController {
     const { accessToken,refreshToken} = await this.authService.googleCallback(code as string)
     setAuthCookie(res, accessToken, refreshToken)
     return res.redirect(`${env.FRONTEND_URL}/dashboard`)
+  }
+  refresh = async (req: Request, res: Response) => {
+    const refreshToken = req.cookies?.refreshToken
+    if (!refreshToken) {
+      throw new AppError("Refresh token is required",401)
+    }
+    const { accessToken,refreshToken:newRefreshToken} = await this.authService.refresh(refreshToken)
+    setAuthCookie(res, accessToken, newRefreshToken)
+    res.status(200).json({
+      success: true,
+      message:"Token refreshed Successfully"
+    })
+  }
+  signout = async (req: Request, res: Response) => {
+    const refreshToken = req.cookies?.refreshToken;
+    if (refreshToken) {
+      await this.authService.signout(refreshToken)
+    }
+    clearAuthCookie(res) 
+    res.status(200).json({
+      success: true,
+      message:"Signout Successfull"
+    })
   }
 }

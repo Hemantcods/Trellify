@@ -22,4 +22,6 @@ router.get(
   asyncHandler(authController.googleCallback),
 );
 router.get("/google", asyncHandler(authController.google));
+router.post("/refresh", asyncHandler(authController.refresh));
+router.post("/signout", asyncHandler(authController.signout));
 export default router;

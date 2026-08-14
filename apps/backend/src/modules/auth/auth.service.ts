@@ -12,7 +12,7 @@ import { AuthRepository } from "./auth.repository";
 import type { SignupInput,SigninInput } from "shared";
 export class AuthService {
   constructor(private readonly authRepositoty: AuthRepository) {}
-  async singup(data: SignupInput) {
+  async signup(data: SignupInput) {
     const { name, email, password } = data;
     const existingUser = await this.authRepositoty.findUserByEmail(email);
     if (existingUser) {
@@ -100,9 +100,7 @@ export class AuthService {
     };
   }
   async signin(data: SigninInput) {
-    console.time("find-user")
     const user = await this.authRepositoty.findUserByEmail(data.email)
-    console.timeEnd("find-user")
     if (!user) {
       throw new AppError("Email or password is incorrect",400)
     }
@@ -110,16 +108,12 @@ export class AuthService {
       throw new AppError("Account is connected with other login method like ,google",401)
     }
     // check the password
-    console.time("password")
     const isPasswordCorrect = await comparePassword(data.password, user.passwordHash) 
-    console.timeEnd("password")
     if (!isPasswordCorrect) {
       throw new AppError("Email or password is incorrect",400)
     }
     // create the session 
-    console.time('session')
     const { accessToken, refreshToken } = await this.createSession(user.id)
-    console.timeEnd('session')
     return {
       accessToken,
       refreshToken,
@@ -129,5 +123,25 @@ export class AuthService {
         email:user.email,
       }
     }
+  }
+  async refresh(refreshToken: string) {
+    const refreshTokenHash = hashRefreshToken(refreshToken)
+    const user = await this.authRepositoty.findUserByRefreshToken(refreshTokenHash)
+    if (!user) {
+      throw new AppError("Invalid refreshToken",401)
+    }
+    const { accessToken, refreshToken: newrefreshToken } = await this.createSession(user.id)
+    return {
+      accessToken,
+      refreshToken:newrefreshToken
+    }
+  }
+  async signout(refreshToken: string) {
+    const refreshTokenHash = hashRefreshToken(refreshToken)
+    const user = await this.authRepositoty.findUserByRefreshToken(refreshTokenHash)
+    if (!user) {
+      throw new AppError("Invalid Token",401)
+    }
+    await this.authRepositoty.clearRefreshToken(user.id)
   }
 }
