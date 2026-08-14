@@ -1,14 +1,15 @@
 import { env } from "../../config/env";
 import { AppError } from "../../errors/AppError";
 import { googleOAuth2Client } from "../../lib/google";
+import { setAuthCookie } from "../../utils/cookie";
 import { generateAccessToken } from "../../utils/jwt";
-import { hashPassword } from "../../utils/password";
+import { comparePassword, hashPassword } from "../../utils/password";
 import {
   generateRefreshToken,
-  hashRefrehToken,
+  hashRefreshToken,
 } from "../../utils/refreshToken";
 import { AuthRepository } from "./auth.repository";
-import type { SignupInput } from "shared";
+import type { SignupInput,SigninInput } from "shared";
 export class AuthService {
   constructor(private readonly authRepositoty: AuthRepository) {}
   async singup(data: SignupInput) {
@@ -91,12 +92,42 @@ export class AuthService {
   private async createSession(userId: string) {
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken();
-    const refreshTokenHash = hashRefrehToken(refreshToken);
-    await this.authRepositoty.updateRefrehToken(userId, refreshTokenHash);
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+    await this.authRepositoty.updateRefreshToken(userId, refreshTokenHash);
     return {
       accessToken,
       refreshToken,
     };
   }
-  
+  async signin(data: SigninInput) {
+    console.time("find-user")
+    const user = await this.authRepositoty.findUserByEmail(data.email)
+    console.timeEnd("find-user")
+    if (!user) {
+      throw new AppError("Email or password is incorrect",400)
+    }
+    if (!user.passwordHash) {
+      throw new AppError("Account is connected with other login method like ,google",401)
+    }
+    // check the password
+    console.time("password")
+    const isPasswordCorrect = await comparePassword(data.password, user.passwordHash) 
+    console.timeEnd("password")
+    if (!isPasswordCorrect) {
+      throw new AppError("Email or password is incorrect",400)
+    }
+    // create the session 
+    console.time('session')
+    const { accessToken, refreshToken } = await this.createSession(user.id)
+    console.timeEnd('session')
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email:user.email,
+      }
+    }
+  }
 }

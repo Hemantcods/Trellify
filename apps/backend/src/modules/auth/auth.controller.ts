@@ -13,6 +13,15 @@ export class AuthController {
       data: user,
     });
   };
+  signin = async (req: Request, res: Response) => {
+    const {email,password}=req.body
+    const { accessToken,refreshToken} =await this.authService.signin({ email, password })
+    setAuthCookie(res, accessToken, refreshToken)
+    res.status(200).json({
+      success: true,
+      message:"Signin Successfull"
+    })
+  }
   google = async (_req: Request, res: Response) => {
     const url = this.authService.getGoogleOAuthUrl()
     return res.redirect(url)

@@ -50,7 +50,7 @@ export class AuthRepository {
       },
     });
   }
-  async updateRefrehToken(userId: string, refreshToken: string) {
+  async updateRefreshToken(userId: string, refreshToken: string) {
     return prisma.user.update({
       where: {
         id: userId,
