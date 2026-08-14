@@ -11,7 +11,6 @@ export const validate = (
     if (!result.success) {
       return next(result.error);
     }
-    req[part] = result.data;
     next();
   };
 };

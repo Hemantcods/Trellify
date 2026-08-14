@@ -44,10 +44,20 @@ export class AuthRepository {
   }) {
     return prisma.user.create({
       data: {
-        name:data.name,
+        name: data.name,
         email: data.email,
-        googleId:data.googleId
-      }
-    })
+        googleId: data.googleId,
+      },
+    });
+  }
+  async updateRefrehToken(userId: string, refreshToken: string) {
+    return prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshToken,
+      },
+    });
   }
 }

@@ -3,6 +3,10 @@ import { AppError } from "../../errors/AppError";
 import { googleOAuth2Client } from "../../lib/google";
 import { generateAccessToken } from "../../utils/jwt";
 import { hashPassword } from "../../utils/password";
+import {
+  generateRefreshToken,
+  hashRefrehToken,
+} from "../../utils/refreshToken";
 import { AuthRepository } from "./auth.repository";
 import type { SignupInput } from "shared";
 export class AuthService {
@@ -73,9 +77,10 @@ export class AuthService {
         googleId,
       });
     }
-    const accessToken = generateAccessToken(user.id);
+    const {accessToken,refreshToken}=await this.createSession(user.id)
     return {
       accessToken,
+      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -83,4 +88,15 @@ export class AuthService {
       },
     };
   }
+  private async createSession(userId: string) {
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = generateRefreshToken();
+    const refreshTokenHash = hashRefrehToken(refreshToken);
+    await this.authRepositoty.updateRefrehToken(userId, refreshTokenHash);
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+  
 }
