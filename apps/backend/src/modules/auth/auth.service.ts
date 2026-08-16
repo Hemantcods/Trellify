@@ -144,4 +144,15 @@ export class AuthService {
     }
     await this.authRepositoty.clearRefreshToken(user.id)
   }
+  async getMe(id: string) {
+    const user = await this.authRepositoty.findUserById(id)
+    if (!user) {
+      throw new AppError("User not found")
+    }
+    return {
+      name: user.name,
+      email: user.email,
+      id:user.id,
+    }
+  }
 }

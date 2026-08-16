@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 export const SigninPage = () => {
+  const navigate=useNavigate()
   const form = useForm<SigninInput>({
     resolver: zodResolver(SigninSchema),
     defaultValues: {
@@ -31,7 +33,7 @@ export const SigninPage = () => {
     try {
       console.log("button clicked");
       await authApi.signin(data);
-      console.log("Signup succesfull");
+      navigate("/dashboard")
     } catch (error) {
       console.error(error);
     }
@@ -86,7 +88,7 @@ export const SigninPage = () => {
                 disabled={form.formState.isSubmitting}
                 variant="outline"
               >
-                {form.formState.isSubmitting ? "Singning Up..." : "Sign up"}
+                {form.formState.isSubmitting ? "Singning In..." : "Sign In"}
               </Button>
             </form>
           </Form>

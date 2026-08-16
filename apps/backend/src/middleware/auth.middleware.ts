@@ -3,7 +3,7 @@ import { AppError } from "../errors/AppError";
 import { verifyAccessToken } from "../utils/jwt";
 
 export interface AuthRequest extends Request {
-  user: {
+  user?: {
     id: string;
   };
 }
@@ -14,7 +14,7 @@ export const requireAuth = async (
   next: NextFunction,
 ) => {
   try {
-    const token = req.cookies?.accesstoken;
+    const token = req.cookies?.accessToken;
     if (!token) {
       throw new AppError("Authentication required", 401);
     }

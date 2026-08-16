@@ -6,7 +6,7 @@ export const authApi = {
     return response.data;
   },
   signin: async (data: SigninInput) => {
-    const response = await api.post("/auth.signin", data);
+    const response = await api.post("/auth/signin", data);
     return response.data;
   },
   refresh: async () => {
@@ -20,4 +20,8 @@ export const authApi = {
   googleLogin: () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   },
+  me: async() => {
+    const response = await api.post("/auth/me");
+    return response
+  }
 };

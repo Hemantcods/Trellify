@@ -1,11 +1,19 @@
 import express from "express"
+import cors from "cors"
 import { errorHandler } from "./middleware/error.middleware"
 import authRoutes from "./modules/auth/auth.routes"
 import { notFoundHandler } from "./middleware/notFound.middleware"
 import cookieParser from "cookie-parser"
+import { env } from "./config/env"
 const app = express()
 app.use(express.json())
 app.use(cookieParser())
+app.use(
+  cors({
+    origin: env.FRONTEND_URL.replace(/\/$/, ""),
+    credentials: true,
+  }),
+)
 // Routes
 app.use("/api/auth", authRoutes)
 
