@@ -1,12 +1,9 @@
-import { prisma } from "db/client";
 import app from "./app";
 
 import { env } from "./config/env";
 
-const startServer = async () => {
+const startServer = () => {
   try {
-    await prisma.$connect();
-    console.log("Database connected");
     app.listen(env.PORT, () => {
       console.log(`Server running on port ${env.PORT}`);
     });
