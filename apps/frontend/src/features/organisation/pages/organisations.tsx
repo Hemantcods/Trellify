@@ -18,6 +18,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { DeleteDialog } from "../components/delete-Dialog";
+import type { CreateOrganisationInput } from "shared";
+import { CreateOrganisationDialog } from "../components/create-dialog";
 type Organisation = {
   id: string;
   name: string;
@@ -32,6 +34,7 @@ export const OrganisationsPage = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedDeleteId, setSelectedDeleteID] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const navigate = useNavigate();
   const handleDelete = async () => {
     if (!selectedDeleteId) return;
@@ -46,7 +49,16 @@ export const OrganisationsPage = () => {
       setIsDeleting(false);
     }
   };
-  console.log(isDeleting)
+  const handleCreate = async (data: CreateOrganisationInput) => {
+    try {
+      const response = await OrganisationApi.createBoard(data);
+      setOrganisations((prev) => [...prev, response.data]);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  };
+  console.log(isDeleting);
   useEffect(() => {
     const getOrgs = async () => {
       try {
@@ -77,7 +89,10 @@ export const OrganisationsPage = () => {
             </p>
           </div>
 
-          <Button className="border text-white bg-black cursor-pointer">
+          <Button
+            className="border text-white bg-black cursor-pointer"
+            onClick={() => setCreateOpen(true)}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Create Organisation
           </Button>
@@ -116,7 +131,10 @@ export const OrganisationsPage = () => {
                 team.
               </p>
 
-              <Button className="mt-6 hover:bg-neutral-200">
+              <Button
+                className="mt-6 hover:bg-neutral-200"
+                onClick={() => setCreateOpen(true)}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Create Organisation
               </Button>
@@ -166,7 +184,7 @@ export const OrganisationsPage = () => {
                         <DropdownMenuItem
                           className="text-destructive hover:bg-red-400"
                           onClick={(e) => {
-                             e.stopPropagation();
+                            e.stopPropagation();
                             setSelectedDeleteID(organisation.id);
                             setDeleteOpen(true);
                           }}
@@ -190,6 +208,11 @@ export const OrganisationsPage = () => {
           onOpenChange={setDeleteOpen}
           onConfirm={handleDelete}
           isDeleting={isDeleting}
+        />
+        <CreateOrganisationDialog
+          open={createOpen}
+          onCreate={handleCreate}
+          onOpenChange={setCreateOpen}
         />
       </div>
     </div>

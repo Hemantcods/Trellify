@@ -4,12 +4,12 @@ import { BoardService } from "./board.service";
 
 export class BoardController {
   constructor(private readonly boardService: BoardService) {}
-  async createBoard(req: AuthRequest, res: Response) {
+  createBoard = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id!;
-    const organisationId = req.params.id as string;
+    const { organisationId } = req.params;
     const board = await this.boardService.createBoard(
       userId,
-      organisationId,
+      organisationId as string,
       req.body,
     );
     return res.status(201).json({
@@ -17,17 +17,20 @@ export class BoardController {
       message: "Board created successfully",
       data: board,
     });
-  }
-  async getBoards(req: AuthRequest, res: Response) {
+  };
+  getBoards = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
-    const organisationId = req.params.id as string;
-    const boards = await this.boardService.getBoards(userId, organisationId);
+    const { organisationId } = req.params;
+    const boards = await this.boardService.getBoards(
+      userId,
+      organisationId as string,
+    );
     return res.status(200).json({
       success: true,
       data: boards,
     });
-  }
-  async getBoardById(req: AuthRequest, res: Response) {
+  };
+  getBoardById = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
     const { organisationId, boardId } = req.params!;
     const board = await this.boardService.getBoardById(
@@ -40,10 +43,21 @@ export class BoardController {
       message: "Board updated successfully",
       data: board,
     });
-  }
-  async deletteBoard(req: AuthRequest, res: Response) {
+  };
+  updateBoard = async (req: AuthRequest, res: Response)=>{
+    const userId = req.user?.id!
+    const { organisationId } = req.params;
+    const board = this.boardService.createBoard(userId, organisationId as string, req.body)
+    
+    
+}
+  deleteBoard = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
     const { organisationId, boardId } = req.params;
-    await this.boardService.deleteBoard(userId, organisationId as string, boardId as string)
-  }
+    await this.boardService.deleteBoard(
+      userId,
+      organisationId as string,
+      boardId as string,
+    );
+  };
 }

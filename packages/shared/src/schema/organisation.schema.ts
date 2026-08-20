@@ -14,7 +14,7 @@ export const CreateOrganisationSchema = z.object({
 });
 export type CreateOrganisationInput = z.infer<typeof CreateOrganisationSchema>;
 export const organisationIdParamSchema = z.object({
-  id: z.uuid("Invalid organisation ID"),
+  organisationId: z.uuid("Invalid organisation ID"),
 });
 
 export const updateOrganisationSchema = z.object({

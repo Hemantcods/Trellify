@@ -27,7 +27,7 @@ export class OrganisationController {
   };
   getOrgById = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id!;
-    const organisationId = req.params.id as string;
+    const organisationId = req.params.organisationId as string;
     const organisation = await this.organisationService.getOrgById(
       organisationId,
       userId,
@@ -39,7 +39,7 @@ export class OrganisationController {
   };
   updateOrg = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id!;
-    const organisationId = req.params.id as string;
+    const organisationId = req.params.organisationId as string;
     const organisation = await this.organisationService.updateOrg(
       organisationId,
       userId,
@@ -52,7 +52,7 @@ export class OrganisationController {
   };
   deleteOrg = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id!;
-    const organisationId = req.params.id as string;
+    const organisationId = req.params.organisationId as string;
     await this.organisationService.deleteOrg(organisationId, userId);
     return res.status(200).json({
       success: true,

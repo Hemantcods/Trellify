@@ -79,7 +79,7 @@ model Board{
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   // relations
-  oganisation Organisation @relation(fields:[organisationId],references:[id],onDelete:Cascade) 
+  organisation Organisation @relation(fields:[organisationId],references:[id],onDelete:Cascade) 
   sections Section[]
   issues Issue[]
   @@index([organisationId])
