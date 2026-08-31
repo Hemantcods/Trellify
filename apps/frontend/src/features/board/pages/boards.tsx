@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { OrganisationApi } from "../organisation.api";
+import { BoardApi } from "../board.api";
 import { Button } from "@/components/ui/button";
 import { Building2, MoreVertical, Plus } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -16,76 +15,73 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { DeleteDialog } from "../components/delete-Dialog";
-import type { CreateOrganisationInput } from "shared";
-import { CreateOrganisationDialog } from "../components/create-dialog";
-type Organisation = {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import { CreateBoardDialog } from "../components/create-dialog";
+import type { Board } from "shared";
 
-export const OrganisationsPage = () => {
-  const [organisations, setOrganisations] = useState<Organisation[]>([]);
+export const BoardsPage = () => {
+  const { orgId } = useParams();
+  const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedDeleteId, setSelectedDeleteID] = useState<string | null>(null);
+  const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const navigate = useNavigate();
+
   const handleDelete = async () => {
     if (!selectedDeleteId) return;
     try {
       setIsDeleting(true);
-      await OrganisationApi.deleteOrg(selectedDeleteId);
+      await BoardApi.deleteBoard(orgId!, selectedDeleteId);
       setDeleteOpen(false);
-      setSelectedDeleteID(null);
+      setSelectedDeleteId(null);
     } catch (error) {
       console.error(error);
     } finally {
       setIsDeleting(false);
     }
   };
-  const handleCreate = async (data: CreateOrganisationInput) => {
+
+  const handleCreate = async (data: { title: string }) => {
     try {
-      const response = await OrganisationApi.createBoard(data);
-      setOrganisations((prev) => [...prev, response.data]);
+      const response = await BoardApi.createBoard(orgId!, data);
+      setBoards((prev) => [...prev, response]);
     } catch (error) {
       console.log(error);
       throw error;
     }
   };
-  console.log(isDeleting);
+
   useEffect(() => {
-    const getOrgs = async () => {
+    const getBoards = async () => {
       try {
-        const response = await OrganisationApi.getAllOrgs();
-        setOrganisations(response.data);
-        console.log(response.data);
+        const response = await BoardApi.getBoards(orgId!);
+        setBoards(response);
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    getOrgs();
-  }, []);
+    getBoards();
+  }, [orgId]);
+
   if (loading) {
-    return <div>Loadinf Organisatios</div>;
+    return <div>Loading boards</div>;
   }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-6 py-10">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Organisations</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Boards</h1>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Manage your organisations and collaborate with your team.
+              Organise your projects and collaborate with your team.
             </p>
           </div>
 
@@ -94,7 +90,7 @@ export const OrganisationsPage = () => {
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create Organisation
+            Create Board
           </Button>
         </div>
 
@@ -117,18 +113,17 @@ export const OrganisationsPage = () => {
         )}
 
         {/* Empty state */}
-        {!loading && organisations.length === 0 && (
+        {!loading && boards.length === 0 && (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <Building2 className="h-6 w-6 text-muted-foreground" />
               </div>
 
-              <h2 className="text-lg font-semibold">No organisations yet</h2>
+              <h2 className="text-lg font-semibold">No boards yet</h2>
 
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Create your first organisation to start collaborating with your
-                team.
+                Create your first board to start organising your projects.
               </p>
 
               <Button
@@ -136,21 +131,21 @@ export const OrganisationsPage = () => {
                 onClick={() => setCreateOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Create Organisation
+                Create Board
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Organisations */}
-        {!loading && organisations.length > 0 && (
+        {/* Boards */}
+        {!loading && boards.length > 0 && (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {organisations.map((organisation) => (
+            {boards.map((board) => (
               <Card
-                key={organisation.id}
+                key={board.id}
                 className="group transition-shadow hover:shadow-md cursor-pointer"
                 onClick={() => {
-                  navigate(`/organisations/${organisation.id}/boards`);
+                  navigate(`/organisations/${orgId}/boards/${board.id}`);
                 }}
               >
                 <CardHeader>
@@ -161,7 +156,7 @@ export const OrganisationsPage = () => {
                       </div>
 
                       <div className="min-w-0">
-                        <CardTitle className="">{organisation.name}</CardTitle>
+                        <CardTitle className="">{board.title}</CardTitle>
                       </div>
                     </div>
 
@@ -185,7 +180,7 @@ export const OrganisationsPage = () => {
                           className="text-destructive hover:bg-red-400"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedDeleteID(organisation.id);
+                            setSelectedDeleteId(board.id);
                             setDeleteOpen(true);
                           }}
                         >
@@ -194,10 +189,6 @@ export const OrganisationsPage = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-
-                  <CardDescription className="line-clamp-2">
-                    {organisation.description || "No description provided."}
-                  </CardDescription>
                 </CardHeader>
               </Card>
             ))}
@@ -209,7 +200,7 @@ export const OrganisationsPage = () => {
           onConfirm={handleDelete}
           isDeleting={isDeleting}
         />
-        <CreateOrganisationDialog
+        <CreateBoardDialog
           open={createOpen}
           onCreate={handleCreate}
           onOpenChange={setCreateOpen}

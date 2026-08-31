@@ -4,6 +4,8 @@ import { SignupPage } from "../features/auth/pages/SignUpPage";
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute";
 import { PublicRoute } from "@/features/auth/PublicRoute";
 import { OrganisationsPage } from "@/features/organisation/pages/organisations";
+import { BoardsPage } from "@/features/board/pages/boards";
+import { BoardDetailPage } from "@/features/board/pages/board-detail";
 
 export const AppRoutes = () => {
   return (
@@ -15,11 +17,13 @@ export const AppRoutes = () => {
       </Route>
 
 
-        {/*protected route*/}
-        <Route element={<ProtectedRoute/>}>
-          <Route path="/dashboard" element={<OrganisationsPage/>} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
+      {/*protected route*/}
+      <Route element={<ProtectedRoute/>}>
+        <Route path="/dashboard" element={<OrganisationsPage/>} />
+        <Route path="/organisations/:orgId/boards" element={<BoardsPage/>} />
+        <Route path="/organisations/:orgId/boards/:boardId" element={<BoardDetailPage/> } />
+      </Route>
+    </Routes>
+  </BrowserRouter>
+);
 };
