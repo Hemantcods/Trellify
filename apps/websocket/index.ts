@@ -1,52 +1,43 @@
 import { WebSocketServer } from "ws";
-import { prisma } from "db/client";
-import WebSocket from "ws";
+import http from "http";
+import { parse } from "cookie";
+import { AccessTokenPayload, verifyAccessToken } from "./jwt";
 
-const server = new WebSocketServer({ port: 3002 });
-
-const ROOMS: Record<string, { id: Number; socket: WebSocket }[]> = {};
-
-server.on("connection", (socket) => {
-  socket.on("message", (data) => {
-    const parsedData = JSON.parse(data);
-    
-    if (parsedData.type === "join") {
-      const boardId = parsedData.boardId;
-      if (!ROOMS[boardId]) {
-        ROOMS[boardId] = [];
-      }
-      const userId = Math.random();
-      // tell exh joined ROOMS
-      ROOMS[boardId].forEach(({ socket }) =>
-        socket.send(
-          JSON.stringify({
-            type: "join",
-            userId,
-          }),
-        ),
-      );
-      ROOMS[boardId].push({ id: userId, socket: socket });
-      // send the ROOMS other ROOMS
-      socket.send(
-        JSON.stringify({
-          type: "initial_state",
-          users: ROOMS[boardId].map((u) => u.id),
-        }),
-      );
+const httpServer = http.createServer();
+const wss = new WebSocketServer({
+  noServer: true,
+});
+httpServer.on("upgrade", (request, socket, head) => {
+  try {
+    console.log("Request hit")
+    const cookies = parse(request.headers.cookie ?? "");
+    const accessToken = cookies.accessToken;
+    if (!accessToken) {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
     }
-  });
-  socket.on('close', () => {
-    Object.entries(ROOMS).map(([roomId, users]) => {
-      const userExists=users.find(u => u.socket === socket)
-      if (userExists){
-        ROOMS[roomId]=ROOMS[roomId].filter(x=>x.socket!=socket)
-        users.forEach(({socket}) => {
-          socket.send(JSON.stringify({
-            type: "leave",
-            userId:userExists.id
-          }))
-        })
-      }
-    })
-  })
+    const payload = verifyAccessToken(accessToken);
+    console.log("Authenticated user:", payload.userId);
+    // http upgrade
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request, payload);
+    });
+  } catch (error) {
+    console.log(error)
+    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+    socket.destroy();
+  }
+});
+
+wss.on(
+  "connection",
+  (socket: WebSocketServer, request: Request, payload: AccessTokenPayload) => {
+    console.log("WebSocket connected");
+    console.log("User ID:", payload.userId);
+  },
+);
+
+httpServer.listen(3002, () => {
+  console.log("WebSocket server running on port 3002");
 });

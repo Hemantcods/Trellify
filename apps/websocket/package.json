@@ -13,7 +13,15 @@
   "type": "module",
   "dependencies": {
     "@types/ws": "^8.18.1",
+    "cookie": "^0.7.2",
     "db": "*",
-    "ws": "^8.21.3"
+    "dotenv": "^16.0.3",
+    "http": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.3",
+    "ws": "^8.21.3",
+    "zod": "^4.6.1"
+  },
+  "devDependencies": {
+    "@types/cookie": "^0.6.0"
   }
 }
