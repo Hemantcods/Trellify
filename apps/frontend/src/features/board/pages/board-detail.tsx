@@ -7,6 +7,7 @@ import { DeleteDialog } from "../components/delete-Dialog";
 import { CreateBoardDialog } from "../components/create-dialog";
 import { SectionColumn } from "../components/section-column";
 import { AddSectionDialog } from "../components/add-section-dialog";
+import { BoardPresence } from "../components/BoardPresence";
 
 interface Section {
   id: string;
@@ -173,6 +174,8 @@ export const BoardDetailPage = () => {
               <Plus className="mr-2 h-4 w-4" />
               Add Board
             </Button>
+
+            <BoardPresence boardId={boardId } />
           </div>
         </div>
 

@@ -98,7 +98,7 @@ async function joinBoard(socket: AuthenticatedWebSocket, boardId: string) {
     ROOMS[boardId] = [];
   }
   // check if already joined
-  const alreadyJoined = ROOMS[boardId].some((user) => user.socket == socket);
+  const alreadyJoined = ROOMS[boardId].some((user) => user.name === socket.name);
   if (alreadyJoined) {
     return;
   }
@@ -120,7 +120,7 @@ async function joinBoard(socket: AuthenticatedWebSocket, boardId: string) {
   socket.send(
     JSON.stringify({
       type: "initial_state",
-      users: ROOMS[boardId].map(({ name }) => name),
+      users: ROOMS[boardId].filter((user)=>user.socket!==socket).map(({ name }) => name),
     }),
   );
 }
