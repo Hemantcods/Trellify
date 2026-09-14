@@ -19,4 +19,16 @@ export class InvitationController {
       message: "Invitation Sent sucessfull",
     });
   };
+  acceptInvitation = async (req: AuthRequest, res: Response) => {
+    const token = req.params.token as string;
+    const membership = await this.invitationService.acceptInvitation({
+      token,
+      userId: req.user!.id,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Invitation Accepted Sucessfully",
+      data:membership
+    });
+  };
 }

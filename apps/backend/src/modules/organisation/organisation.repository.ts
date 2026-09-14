@@ -1,4 +1,4 @@
-import { prisma } from "db/client";
+import { InvitationStatus, MembershipRoles, prisma } from "db/client";
 import type { CreateOrganisationInput, UpdateOrganisationInput } from "shared";
 import { AppError } from "../../errors/AppError";
 export class OrganisationRepository {
@@ -99,11 +99,24 @@ export class OrganisationRepository {
       },
     });
   }
-  async findMembership(userId:string,organisationId: string) {
+  async findMembership(userId: string, organisationId: string) {
     return prisma.membership.findFirst({
       where: {
         userId,
         organisationId,
+      },
+    });
+  }
+  async createMembership(
+    userId: string,
+    organisationId: string,
+    role: MembershipRoles,
+  ) {
+    return prisma.membership.create({
+      data: {
+        userId,
+        organisationId,
+        role,
       },
     });
   }

@@ -15,5 +15,9 @@ export type AcceptInvitationInput = {
   userId: string;
 };
 export const inviteEmailSchema = z.object({
-  email:z.email("a valid email is required")
-})
+  email: z.email("a valid email is required"),
+});
+
+export const AcceptInvteSchema = z.object({
+  token: z.string().length(32, "Inavlid invite token"),
+});

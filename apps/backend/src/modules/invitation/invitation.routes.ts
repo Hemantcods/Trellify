@@ -1,7 +1,11 @@
 import express from "express";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { validate } from "../../middleware/validate.middleware";
-import { inviteEmailSchema, organisationIdParamSchema } from "shared";
+import {
+  AcceptInvteSchema,
+  inviteEmailSchema,
+  organisationIdParamSchema,
+} from "shared";
 import { invitationController } from "./invitation.container";
 
 const router = express.Router();
@@ -13,5 +17,10 @@ router.post(
   validate(inviteEmailSchema),
   invitationController.createInvitation,
 );
-
+router.get(
+  "/:token",
+  requireAuth,
+  validate(AcceptInvteSchema, "params"),
+  invitationController.acceptInvitation,
+);
 export default router;

@@ -1,9 +1,9 @@
-import { MembershipRoles } from "db/client";
+import { InvitationStatus, MembershipRoles } from "db/client";
 import { AppError } from "../../errors/AppError";
 import { AuthRepository } from "../auth/auth.repository";
 import { OrganisationRepository } from "../organisation/organisation.repository";
 import { InvitationRepository } from "./invitation.repository";
-import { CreateInvitationInput } from "shared";
+import { AcceptInvitationInput, CreateInvitationInput } from "shared";
 import crypto from "crypto";
 export class InvitationService {
   constructor(
@@ -64,7 +64,44 @@ export class InvitationService {
       id: invitation.id,
       email: invitation.email,
       organisationId: invitation.organisationId,
-      expiresAt:invitation.expiresAt
+      expiresAt: invitation.expiresAt,
+    };
+  }
+  async acceptInvitation(input: AcceptInvitationInput) {
+    const { userId, token } = input;
+    const invitation = await this.invitationRepository.findByToken(token);
+    if (!invitation) {
+      throw new AppError("Invalid Invitation");
     }
+    if (invitation.status !== InvitationStatus.PENDING) {
+      throw new AppError("this invitation is no lonver valid", 400);
+    }
+    if (invitation.expiresAt < new Date()) {
+      throw new AppError("this invitation is no lonver valid", 400);
+    }
+    const user = await this.userRepository.findUserById(userId);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+    if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      throw new AppError(
+        "This invitation was sent to a different email address",
+        403,
+      );
+    }
+    const existingMemberShip = await this.organisationRepository.findMembership(
+      userId,
+      invitation.organisationId,
+    );
+    if (existingMemberShip) {
+      throw new AppError("You are already a member of this organisation", 409);
+    }
+    const membership = await this.organisationRepository.createMembership(
+      userId,
+      invitation.organisationId,
+      MembershipRoles.MEMBER,
+    );
+    await this.invitationRepository.markAsAccepted(invitation.id);
+    return membership;
   }
 }
