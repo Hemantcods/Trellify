@@ -38,7 +38,7 @@ export class AuthController {
       code as string,
     );
     setAuthCookie(res, accessToken, refreshToken);
-    return res.redirect(`${env.FRONTEND_URL}/dashboard`);
+    return res.redirect(`${env.FRONTEND_URL}/oauth/success`);
   };
   refresh = async (req: Request, res: Response) => {
     const refreshToken = req.cookies?.refreshToken;

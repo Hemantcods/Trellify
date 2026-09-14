@@ -6,24 +6,30 @@ import { PublicRoute } from "@/features/auth/PublicRoute";
 import { OrganisationsPage } from "@/features/organisation/pages/organisations";
 import { BoardsPage } from "@/features/board/pages/boards";
 import { BoardDetailPage } from "@/features/board/pages/board-detail";
+import AcceptInvitePage from "@/features/invitations/pages/acceptInvite";
+import OAuthSuccessPage from "@/features/auth/pages/OauthSuccess";
 
 export const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<PublicRoute/>} >
-        <Route path="/signin" element={<SigninPage />} />
+        <Route element={<PublicRoute />}>
+          <Route path="/signin" element={<SigninPage />} />
           <Route path="/signup" element={<SignupPage />} />
-      </Route>
+        </Route>
 
-
-      {/*protected route*/}
-      <Route element={<ProtectedRoute/>}>
-        <Route path="/dashboard" element={<OrganisationsPage/>} />
-        <Route path="/organisations/:orgId/boards" element={<BoardsPage/>} />
-        <Route path="/organisations/:orgId/boards/:boardId" element={<BoardDetailPage/> } />
-      </Route>
-    </Routes>
-  </BrowserRouter>
-);
+        {/*protected route*/}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<OrganisationsPage />} />
+          <Route path="/organisations/:orgId/boards" element={<BoardsPage />} />
+          <Route
+            path="/organisations/:orgId/boards/:boardId"
+            element={<BoardDetailPage />}
+          />
+        </Route>
+        <Route path="/oauth/success" element={<OAuthSuccessPage />} />
+        <Route path="/invitations/:token" element={<AcceptInvitePage />} />
+      </Routes>
+    </BrowserRouter>
+  );
 };

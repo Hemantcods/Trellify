@@ -12,6 +12,7 @@ type AuthContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   logout: () => Promise<void>;
+  refreshUser:()=>Promise<User|null>
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +29,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const getCurrentUser = async () => {
       try {
         const response = await authApi.me();
-        setUser(response.data)
+        setUser(response.data.data)
       } catch (error) {
         console.error(error)
         setUser(null)
@@ -45,8 +46,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(null)
     }
   }
+  const refreshUser = async () => {
+    try { 
+      const response = await authApi.me();
+      const user = response.data.data
+      setUser(user)
+      return user
+    } catch (error) {
+      setUser(null)
+      return null
+    }
+  }
   return <AuthContext.Provider value={{
-    user, isLoading,isAuthenticated:user!==null,logout}}>
+    user, isLoading,isAuthenticated:user!==null,logout,refreshUser}}>
     {children}
   </AuthContext.Provider>
 };
