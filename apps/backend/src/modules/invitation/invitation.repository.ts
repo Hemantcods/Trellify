@@ -24,4 +24,31 @@ export class InvitationRepository {
       },
     });
   }
+  async findById(id: string) {
+    return prisma.invitation.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
+  async markAsAccepted(id: string) {
+    return prisma.invitation.update({
+      where: {
+        id,
+      },
+      data: {
+        status: InvitationStatus.ACCEPTED,
+      },
+    });
+  }
+  async findOrgInvitations(organisationId: string) {
+    return prisma.invitation.findMany({
+      where: {
+        organisationId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
 }

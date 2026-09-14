@@ -99,4 +99,12 @@ export class OrganisationRepository {
       },
     });
   }
+  async findMembership(userId:string,organisationId: string) {
+    return prisma.membership.findFirst({
+      where: {
+        userId,
+        organisationId,
+      },
+    });
+  }
 }
