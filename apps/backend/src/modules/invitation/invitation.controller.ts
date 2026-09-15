@@ -6,7 +6,7 @@ export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
   createInvitation = async (req: AuthRequest, res: Response) => {
     const organisationId = req.params.organisationId as string;
-    const email = req.body;
+    const {email} = req.body;
     const userId = req.user?.id!;
     const invitation = await this.invitationService.createInvitation({
       userId,

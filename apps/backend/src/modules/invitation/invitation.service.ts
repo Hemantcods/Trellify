@@ -5,6 +5,9 @@ import { OrganisationRepository } from "../organisation/organisation.repository"
 import { InvitationRepository } from "./invitation.repository";
 import { AcceptInvitationInput, CreateInvitationInput } from "shared";
 import crypto from "crypto";
+import { sendEmail } from "../../services/mail/sendEmail";
+import { inviteTemplate } from "../../services/mail/templates/invite.template";
+import { env } from "../../config/env";
 export class InvitationService {
   constructor(
     private readonly invitationRepository: InvitationRepository,
@@ -21,7 +24,7 @@ export class InvitationService {
     if (!membership) {
       throw new AppError("You are not a member of this organisation", 403);
     }
-    if (membership.role !== MembershipRoles.MEMBER) {
+    if (membership.role === MembershipRoles.MEMBER) {
       throw new AppError("You do not have permisstion to invite member", 403);
     }
     const existingUser =
@@ -54,6 +57,18 @@ export class InvitationService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     // TODO: Email Service
+    const invitationUrl = `${env.FRONTEND_URL}/invitations/${token}`;
+    await sendEmail({
+      to: normalisedEmail,
+      subject: "Inviation to the organisation",
+      html: inviteTemplate(
+        existingUser?.name || "User",
+        "Owner",
+        "Organisation",
+        "member",
+        invitationUrl,
+      ),
+    });
     const invitation = await this.invitationRepository.createInvitation({
       email: normalisedEmail,
       organisationId,
