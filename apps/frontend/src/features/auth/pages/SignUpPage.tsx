@@ -25,7 +25,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 export const SignupPage = () => {
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const redirect = searchParams.get("redirect") || "/onboarding";
   const googlePopupRef = useRef<Window | null>(null);
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -151,11 +151,10 @@ export const SignupPage = () => {
               />
 
               <Button
-                color="blue"
                 type="submit"
-                className="w-full rounded-full bg-black text-white"
+                className="w-full rounded-full"
                 disabled={form.formState.isSubmitting}
-                variant="outline"
+                variant="default"
               >
                 {form.formState.isSubmitting ? "Singning Up..." : "Sign up"}
               </Button>

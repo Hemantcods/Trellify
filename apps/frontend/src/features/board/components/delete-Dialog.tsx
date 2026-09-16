@@ -44,7 +44,7 @@ export const DeleteDialog = ({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer hover:bg-red-400"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
           >
             {isDeleting ? "Deleting..." : "Delete"}
           </AlertDialogAction>

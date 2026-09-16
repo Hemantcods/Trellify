@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate, useParams } from "react-router-dom";
 import { DeleteDialog } from "../components/delete-Dialog";
 import { CreateBoardDialog } from "../components/create-dialog";
+import { isValidUUID } from "@/lib/validation";
 import type { Board } from "shared";
 
 export const BoardsPage = () => {
@@ -72,6 +73,19 @@ export const BoardsPage = () => {
     return <div>Loading boards</div>;
   }
 
+  if (!isValidUUID(orgId)) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Invalid organisation</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The organisation link is invalid.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-6 py-10">
@@ -86,7 +100,7 @@ export const BoardsPage = () => {
           </div>
 
           <Button
-            className="border text-white bg-black cursor-pointer"
+            variant="default"
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -127,7 +141,8 @@ export const BoardsPage = () => {
               </p>
 
               <Button
-                className="mt-6 hover:bg-neutral-200"
+                variant="outline"
+                className="mt-6"
                 onClick={() => setCreateOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -171,13 +186,13 @@ export const BoardsPage = () => {
                         </Button>
                       </DropdownMenuTrigger>
 
-                      <DropdownMenuContent className="bg-white" align="start">
-                        <DropdownMenuItem className="hover:bg-neutral-200">
+                       <DropdownMenuContent align="start">
+                        <DropdownMenuItem>
                           Settings
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
-                          className="text-destructive hover:bg-red-400"
+                          className="text-destructive hover:bg-destructive/10"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedDeleteId(board.id);
