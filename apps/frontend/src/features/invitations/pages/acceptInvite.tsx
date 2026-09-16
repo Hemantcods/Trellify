@@ -1,6 +1,7 @@
 import { useAuth } from "@/features/auth/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { acceptInvite } from "../invitation.api";
 
 export default function AcceptInvitePage() {
   const { token } = useParams<{ token: string }>();
@@ -9,7 +10,24 @@ export default function AcceptInvitePage() {
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   console.log(user);
-  const handleAccept = async () => {};
+  const handleAccept = async () => {
+    if (!token) {
+      setError("Invalid invitation link.");
+      return;
+    }
+    try {
+      setAccepting(true);
+      setError(null);
+      const data = await acceptInvite(token);
+      navigate(`/organisations/${data.membership.organisationId}/boards`, {
+        replace: true,
+      });
+    } catch (error) {
+      setError(error?.response?.message || "Failed to accept invitation.");
+    } finally {
+      setAccepting(false)
+    }
+  };
   useEffect(() => {
     if (isLoading) return;
     if (!user && token) {
@@ -58,7 +76,7 @@ export default function AcceptInvitePage() {
           <button
             onClick={handleAccept}
             disabled={accepting}
-            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white cursor-pointer disabled:opacity-50"
           >
             {accepting ? "Joining..." : "Accept invitation"}
           </button>
