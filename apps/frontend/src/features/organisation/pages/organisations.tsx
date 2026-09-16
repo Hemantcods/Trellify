@@ -90,7 +90,7 @@ export const OrganisationsPage = () => {
           </div>
 
           <Button
-            className="border text-white bg-black cursor-pointer"
+            variant="default"
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -132,7 +132,8 @@ export const OrganisationsPage = () => {
               </p>
 
               <Button
-                className="mt-6 hover:bg-neutral-200"
+                variant="outline"
+                className="mt-6"
                 onClick={() => setCreateOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -176,13 +177,13 @@ export const OrganisationsPage = () => {
                         </Button>
                       </DropdownMenuTrigger>
 
-                      <DropdownMenuContent className="bg-white" align="start">
-                        <DropdownMenuItem className="hover:bg-neutral-200">
+                       <DropdownMenuContent align="start">
+                        <DropdownMenuItem>
                           Settings
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
-                          className="text-destructive hover:bg-red-400"
+                          className="text-destructive hover:bg-destructive/10"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedDeleteID(organisation.id);

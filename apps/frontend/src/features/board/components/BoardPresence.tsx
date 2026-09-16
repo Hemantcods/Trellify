@@ -59,7 +59,7 @@ export function BoardPresence({ boardId }: BoardPresenceProps) {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-64 bg-white">
+      <PopoverContent align="end" className="w-64">
         <div className="space-y-3">
           <div>
             <h3 className="font-semibold">

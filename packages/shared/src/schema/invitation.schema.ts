@@ -19,5 +19,5 @@ export const inviteEmailSchema = z.object({
 });
 
 export const AcceptInvteSchema = z.object({
-  token: z.string().length(32, "Inavlid invite token"),
+  token: z.string().min(32, "Inavlid invite token"),
 });

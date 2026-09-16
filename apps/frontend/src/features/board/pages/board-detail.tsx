@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Building2, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate, useParams } from "react-router-dom";
+import { isValidUUID } from "@/lib/validation";
 import { DeleteDialog } from "../components/delete-Dialog";
 import { CreateBoardDialog } from "../components/create-dialog";
 import { SectionColumn } from "../components/section-column";
@@ -141,6 +142,23 @@ export const BoardDetailPage = () => {
     );
   }
 
+  if (!isValidUUID(orgId) || !isValidUUID(boardId)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-7xl px-6 py-10">
+          <div className="flex min-h-[50vh] items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-lg font-semibold">Invalid board link</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The board link is invalid.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!board) {
     return <div className="min-h-screen bg-background">Board not found</div>;
   }
@@ -210,7 +228,8 @@ export const BoardDetailPage = () => {
               </p>
 
               <Button
-                className="mt-6 hover:bg-neutral-200"
+                variant="outline"
+                className="mt-6"
                 onClick={() => setAddSectionOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />

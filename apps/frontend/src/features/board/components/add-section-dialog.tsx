@@ -56,7 +56,7 @@ export const AddSectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-125 bg-white">
+      <DialogContent className="sm:max-w-125">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Section</DialogTitle>
@@ -95,7 +95,7 @@ export const AddSectionDialog = ({
             <Button
               type="submit"
               disabled={!title.trim() || isCreating}
-              className="bg-black text-white hover:bg-black/90"
+              variant="default"
             >
               {isCreating && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

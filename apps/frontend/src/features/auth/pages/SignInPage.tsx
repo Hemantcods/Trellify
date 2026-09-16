@@ -140,11 +140,10 @@ export const SigninPage = () => {
               />
 
               <Button
-                color="blue"
                 type="submit"
-                className="w-full rounded-full bg-black text-white"
+                className="w-full rounded-full"
                 disabled={form.formState.isSubmitting}
-                variant="outline"
+                variant="default"
               >
                 {form.formState.isSubmitting ? "Singning In..." : "Sign In"}
               </Button>
