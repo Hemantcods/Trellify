@@ -5,6 +5,7 @@ import authRoutes from "./modules/auth/auth.routes"
 import organisationRoutes from "./modules/organisation/organisation.routes"
 import boardRoutes from "./modules/board/board.routes"
 import invitationRoutes from "./modules/invitation/invitation.routes"
+import sectionRoutes from "./modules/section/section.routes"
 import { notFoundHandler } from "./middleware/notFound.middleware"
 import cookieParser from "cookie-parser"
 import { env } from "./config/env"
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes)
 app.use("/api/organisation",organisationRoutes)
 app.use("/api/board", boardRoutes)
 app.use("/api/invitation",invitationRoutes)
+app.use("/api/section", sectionRoutes)
 // Not found middleware
 app.use(notFoundHandler)
 
