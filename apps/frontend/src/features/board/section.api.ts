@@ -10,12 +10,12 @@ export interface Section {
 
 export const SectionApi = {
   getSections: async (boardId: string) => {
-    const response = await api.get(`/board/${boardId}/sections`);
+    const response = await api.get(`/section/${boardId}`);
     return response.data.data as Section[];
   },
 
   createSection: async (boardId: string, data: CreateSectionInput) => {
-    const response = await api.post(`/board/${boardId}/sections`, data);
+    const response = await api.post(`/section/${boardId}`, data);
     return response.data.data as Section;
   },
 

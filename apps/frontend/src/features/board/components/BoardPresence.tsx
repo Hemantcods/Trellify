@@ -1,31 +1,25 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-import { useBoardPresence } from "../hooks/useBoardPresence";
-
+type PresenceUser = {
+  name: string;
+};
 type BoardPresenceProps = {
-  boardId: string;
+  users: PresenceUser[];
+  connected: boolean;
 };
 
 function getInitial(name: string) {
   return (name ?? "").trim().charAt(0).toUpperCase() || "?";
 }
 
-export function BoardPresence({ boardId }: BoardPresenceProps) {
-  const { users, connected } = useBoardPresence(boardId);
-
+export function BoardPresence({ users, connected }: BoardPresenceProps) {
   const visibleUsers = users.slice(0, 4);
   const remainingCount = Math.max(users.length - 4, 0);
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -42,17 +36,13 @@ export function BoardPresence({ boardId }: BoardPresenceProps) {
               >
                 <AvatarImage src="" alt={user.name} />
 
-                <AvatarFallback>
-                  {getInitial(user.name)}
-                </AvatarFallback>
+                <AvatarFallback>{getInitial(user.name)}</AvatarFallback>
               </Avatar>
             ))}
 
             {remainingCount > 0 && (
               <Avatar className="h-8 w-8 border-2 border-background">
-                <AvatarFallback>
-                  +{remainingCount}
-                </AvatarFallback>
+                <AvatarFallback>+{remainingCount}</AvatarFallback>
               </Avatar>
             )}
           </div>
@@ -62,9 +52,7 @@ export function BoardPresence({ boardId }: BoardPresenceProps) {
       <PopoverContent align="end" className="w-64">
         <div className="space-y-3">
           <div>
-            <h3 className="font-semibold">
-              People viewing this board
-            </h3>
+            <h3 className="font-semibold">People viewing this board</h3>
 
             <p className="text-sm text-muted-foreground">
               {users.length} {users.length === 1 ? "person" : "people"}{" "}
@@ -84,9 +72,7 @@ export function BoardPresence({ boardId }: BoardPresenceProps) {
                   className="flex items-center gap-3"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      {getInitial(user.name)}
-                    </AvatarFallback>
+                    <AvatarFallback>{getInitial(user.name)}</AvatarFallback>
                   </Avatar>
 
                   <span className="text-sm">{user.name}</span>

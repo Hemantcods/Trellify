@@ -17,7 +17,11 @@ import { BoardApi } from "../board.api";
 
 export const BoardDetailPage = () => {
   const { orgId, boardId } = useParams();
-  const [board, setBoard] = useState<{ id: string; title: string; organisationId: string } | null>(null);
+  const [board, setBoard] = useState<{
+    id: string;
+    title: string;
+    organisationId: string;
+  } | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +32,6 @@ export const BoardDetailPage = () => {
   const navigate = useNavigate();
 
   const { users, connected, send, subscribe } = useBoardSocket(boardId || "");
-
   // Load board data from API
   useEffect(() => {
     const loadBoard = async () => {
@@ -51,55 +54,56 @@ export const BoardDetailPage = () => {
   }, [orgId, boardId]);
 
   // Handle incoming WebSocket events from other users
-  const handleSocketEvent = useCallback(
-    (data: any) => {
-      switch (data.type) {
-        case "issue:created": {
-          setIssues((prev) => [...prev, data.issue]);
-          break;
-        }
-        case "issue:updated": {
-          setIssues((prev) =>
-            prev.map((i) =>
-              i.id === data.issueId ? { ...i, ...data.changes } : i,
-            ),
-          );
-          break;
-        }
-        case "issue:deleted": {
-          setIssues((prev) => prev.filter((i) => i.id !== data.issueId));
-          break;
-        }
-        case "issue:moved": {
-          setIssues((prev) =>
-            prev.map((i) =>
-              i.id === data.issueId
-                ? { ...i, sectionId: data.toSectionId, position: data.newPosition }
-                : i,
-            ),
-          );
-          break;
-        }
-        case "section:created": {
-          setSections((prev) => [...prev, data.section]);
-          break;
-        }
-        case "section:updated": {
-          setSections((prev) =>
-            prev.map((s) =>
-              s.id === data.sectionId ? { ...s, ...data.changes } : s,
-            ),
-          );
-          break;
-        }
-        case "section:deleted": {
-          setSections((prev) => prev.filter((s) => s.id !== data.sectionId));
-          break;
-        }
+  const handleSocketEvent = useCallback((data: any) => {
+    switch (data.type) {
+      case "issue:created": {
+        setIssues((prev) => [...prev, data.issue]);
+        break;
       }
-    },
-    [],
-  );
+      case "issue:updated": {
+        setIssues((prev) =>
+          prev.map((i) =>
+            i.id === data.issueId ? { ...i, ...data.changes } : i,
+          ),
+        );
+        break;
+      }
+      case "issue:deleted": {
+        setIssues((prev) => prev.filter((i) => i.id !== data.issueId));
+        break;
+      }
+      case "issue:moved": {
+        setIssues((prev) =>
+          prev.map((i) =>
+            i.id === data.issueId
+              ? {
+                  ...i,
+                  sectionId: data.toSectionId,
+                  position: data.newPosition,
+                }
+              : i,
+          ),
+        );
+        break;
+      }
+      case "section:created": {
+        setSections((prev) => [...prev, data.section]);
+        break;
+      }
+      case "section:updated": {
+        setSections((prev) =>
+          prev.map((s) =>
+            s.id === data.sectionId ? { ...s, ...data.changes } : s,
+          ),
+        );
+        break;
+      }
+      case "section:deleted": {
+        setSections((prev) => prev.filter((s) => s.id !== data.sectionId));
+        break;
+      }
+    }
+  }, []);
 
   // Subscribe to WebSocket events
   useEffect(() => {
@@ -277,38 +281,38 @@ export const BoardDetailPage = () => {
               <Plus className="mr-2 h-4 w-4" />
               Add Section
             </Button>
-
-            <Button
-              className="border text-white bg-black cursor-pointer"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Board
-            </Button>
-
-            <BoardPresence boardId={boardId} />
+            <BoardPresence users={users} connected={connected} />
           </div>
         </div>
 
         {/* Sections Grid */}
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {sections.map((section) => (
-              <div key={section.id} className="w-[320px] min-w-[320px]">
-                <SectionColumn
-                  section={section}
-                  issues={issues.filter(
-                    (issue) => issue.sectionId === section.id,
-                  )}
-                  orgId={orgId!}
-                  boardId={board.id}
-                  onCreateIssue={handleCreateIssue}
-                  onDeleteIssue={handleDeleteIssue}
-                />
-              </div>
-            ))}
-          </div>
-        </DndContext>
+        {sections && (
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {sections.map((section) => {
+                if (section) {
+                  return (
+                    <div key={section.id} className="w-[320px] min-w-[320px]">
+                      <SectionColumn
+                        section={section}
+                        issues={issues.filter(
+                          (issue) => issue.sectionId === section.id,
+                        )}
+                        orgId={orgId!}
+                        boardId={board.id}
+                        onCreateIssue={handleCreateIssue}
+                        onDeleteIssue={handleDeleteIssue}
+                      />
+                    </div>
+                  );
+                }
+              })}
+            </div>
+          </DndContext>
+        )}
 
         {/* Empty state */}
         {sections.length === 0 && (

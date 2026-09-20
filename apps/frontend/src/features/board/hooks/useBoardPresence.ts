@@ -31,6 +31,7 @@ export function useBoardPresence(boardId: string) {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log("Message")
         switch (data.type) {
           case "initial_state": {
             const initialUsers: PresenceUser[] = (data.users ?? []).map(
