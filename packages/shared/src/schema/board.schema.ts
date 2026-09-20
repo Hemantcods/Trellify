@@ -30,3 +30,7 @@ export const boardIdParamsSchema = z.object({
   organisationId: z.uuid(),
   boardId: z.uuid(),
 });
+
+export const boardOnlyIdSchema = z.object({
+  boardId: z.uuid(),
+});

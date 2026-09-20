@@ -1,4 +1,4 @@
-import { prisma } from "db/client";
+import { MembershipRoles, prisma } from "db/client";
 import { CreateBoardInput, UpdateOrganisationInput } from "shared";
 import { AppError } from "../../errors/AppError";
 
@@ -18,7 +18,7 @@ export class BoardRepository {
     if (!membership) {
       throw new AppError("You are not a member of this organisation", 403);
     }
-    if (membership.role !== "OWNER" && membership.role !== "ADMIN") {
+    if (membership.role !== MembershipRoles.OWNER && membership.role !== MembershipRoles.ADMIN) {
       throw new AppError("You do not have permission to create a board", 403);
     }
     return prisma.board.create({
@@ -41,7 +41,7 @@ export class BoardRepository {
     if (!membership) {
       throw new AppError("You are not a member of this organisation", 403);
     }
-    if (membership.role !== "OWNER" && membership.role !== "ADMIN") {
+    if (membership.role !== MembershipRoles.OWNER && membership.role !== MembershipRoles.ADMIN) {
       throw new AppError(
         "You do not have permission to update this board",
         403,
@@ -120,7 +120,7 @@ export class BoardRepository {
     if (!membership) {
       throw new AppError("You are not a member of this organisation", 403);
     }
-    if (membership.role !== "OWNER" && membership.role !== "ADMIN") {
+    if (membership.role !== MembershipRoles.OWNER && membership.role !== MembershipRoles.ADMIN) {
       throw new AppError(
         "You do not have permission to delete this board",
         403,
@@ -141,5 +141,31 @@ export class BoardRepository {
         id: boardId,
       },
     });
+  }
+  async findBoardById(boardId: string) {
+    return prisma.board.findFirst({
+      where: {
+        id: boardId,
+      },
+    });
+  }
+  async userCanAccessBoard(userId: string, boardId: string) {
+    const board = await prisma.board.findFirst({
+      where: {
+        id: boardId,
+        organisation: {
+          memberships: {
+            some: {
+              userId,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return !!board;
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Building2, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,127 +9,208 @@ import { CreateBoardDialog } from "../components/create-dialog";
 import { SectionColumn } from "../components/section-column";
 import { AddSectionDialog } from "../components/add-section-dialog";
 import { BoardPresence } from "../components/BoardPresence";
-
-interface Section {
-  id: string;
-  title: string;
-  boardId: string;
-  position: number;
-}
-
-interface Issue {
-  id: string;
-  title: string;
-  description: string | null;
-  boardId: string;
-  sectionId: string;
-  assignees: string[];
-}
-
-interface DummyBoard {
-  id: string;
-  title: string;
-  organisationId: string;
-}
-
-const DUMMY_BOARD: DummyBoard = {
-  id: "1",
-  title: "Project Board",
-  organisationId: "org-1",
-};
-
-const DUMMY_SECTIONS: Section[] = [
-  {
-    id: "s1",
-    title: "Backlog",
-    boardId: "1",
-    position: 1,
-  },
-  {
-    id: "s2",
-    title: "In Progress",
-    boardId: "1",
-    position: 2,
-  },
-  {
-    id: "s3",
-    title: "Review",
-    boardId: "1",
-    position: 3,
-  },
-  {
-    id: "s3",
-    title: "Review",
-    boardId: "1",
-    position: 3,
-  },
-  {
-    id: "s3",
-    title: "Review",
-    boardId: "1",
-    position: 3,
-  },
-];
-
-const DUMMY_ISSUES: Issue[] = [
-  {
-    id: "i1",
-    title: "Setup project",
-    description: "Initialize repo and CI pipeline",
-    boardId: "1",
-    sectionId: "s1",
-    assignees: ["user-1", "user-2"],
-  },
-  {
-    id: "i1",
-    title: "Setup project",
-    description: "Initialize repo and CI pipeline",
-    boardId: "1",
-    sectionId: "s1",
-    assignees: ["user-1", "user-2"],
-  },
-  {
-    id: "i2",
-    title: "Fix login bug",
-    description: "Users cannot sign in with Google",
-    boardId: "1",
-    sectionId: "s2",
-    assignees: ["user-3"],
-  },
-  {
-    id: "i3",
-    title: "Update README",
-    description: "Add contribution guidelines",
-    boardId: "1",
-    sectionId: "s3",
-    assignees: [],
-  },
-];
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { useBoardSocket } from "../hooks/useBoardSocket";
+import { IssueApi, type Issue } from "../issue.api";
+import { SectionApi, type Section } from "../section.api";
+import { BoardApi } from "../board.api";
 
 export const BoardDetailPage = () => {
   const { orgId, boardId } = useParams();
-  const [board, setBoard] = useState<DummyBoard | null>(null);
+  const [board, setBoard] = useState<{ id: string; title: string; organisationId: string } | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [loading, setLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Use dummy data instead of API calls
-  useEffect(() => {
-    setBoard(DUMMY_BOARD);
-    setSections(DUMMY_SECTIONS);
-    setLoading(false);
-  }, []);
+  const { users, connected, send, subscribe } = useBoardSocket(boardId || "");
 
+  // Load board data from API
+  useEffect(() => {
+    const loadBoard = async () => {
+      try {
+        const [boardData, sectionsData, issuesData] = await Promise.all([
+          BoardApi.getBoardById(orgId!, boardId!),
+          SectionApi.getSections(boardId!),
+          IssueApi.getIssuesByBoard(boardId!),
+        ]);
+        setBoard(boardData || null);
+        setSections(sectionsData || []);
+        setIssues(issuesData || []);
+      } catch (error) {
+        console.error("Failed to load board:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadBoard();
+  }, [orgId, boardId]);
+
+  // Handle incoming WebSocket events from other users
+  const handleSocketEvent = useCallback(
+    (data: any) => {
+      switch (data.type) {
+        case "issue:created": {
+          setIssues((prev) => [...prev, data.issue]);
+          break;
+        }
+        case "issue:updated": {
+          setIssues((prev) =>
+            prev.map((i) =>
+              i.id === data.issueId ? { ...i, ...data.changes } : i,
+            ),
+          );
+          break;
+        }
+        case "issue:deleted": {
+          setIssues((prev) => prev.filter((i) => i.id !== data.issueId));
+          break;
+        }
+        case "issue:moved": {
+          setIssues((prev) =>
+            prev.map((i) =>
+              i.id === data.issueId
+                ? { ...i, sectionId: data.toSectionId, position: data.newPosition }
+                : i,
+            ),
+          );
+          break;
+        }
+        case "section:created": {
+          setSections((prev) => [...prev, data.section]);
+          break;
+        }
+        case "section:updated": {
+          setSections((prev) =>
+            prev.map((s) =>
+              s.id === data.sectionId ? { ...s, ...data.changes } : s,
+            ),
+          );
+          break;
+        }
+        case "section:deleted": {
+          setSections((prev) => prev.filter((s) => s.id !== data.sectionId));
+          break;
+        }
+      }
+    },
+    [],
+  );
+
+  // Subscribe to WebSocket events
+  useEffect(() => {
+    const unsubscribe = subscribe(handleSocketEvent);
+    return unsubscribe;
+  }, [subscribe, handleSocketEvent]);
+
+  // Drag-and-drop handler with API + WebSocket broadcast
+  const handleDragEnd = async (event: {
+    active: { id: string | number };
+    over: { id: string | number } | null;
+  }) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    const activeIssue = issues.find((i) => i.id === activeId);
+    if (!activeIssue) return;
+
+    const overSection = sections.find((s) => s.id === overId);
+    const overIssue = issues.find((i) => i.id === overId);
+
+    let targetSectionId: string;
+    let targetIndex: number;
+
+    if (overSection) {
+      targetSectionId = overSection.id;
+      const sectionIssues = issues.filter(
+        (i) => i.sectionId === targetSectionId && i.id !== activeId,
+      );
+      targetIndex = sectionIssues.length;
+    } else if (overIssue) {
+      targetSectionId = overIssue.sectionId;
+      const sectionIssues = issues.filter(
+        (i) => i.sectionId === targetSectionId && i.id !== activeId,
+      );
+      targetIndex = sectionIssues.findIndex((i) => i.id === overId);
+    } else {
+      return;
+    }
+
+    const fromSectionId = activeIssue.sectionId;
+
+    // 1. Optimistic UI update
+    setIssues((prev) => {
+      const others = prev.filter((i) => i.id !== activeId);
+      const movedIssue = { ...activeIssue, sectionId: targetSectionId };
+      const targetSectionIssues = others.filter(
+        (i) => i.sectionId === targetSectionId,
+      );
+      const restOfIssues = others.filter(
+        (i) => i.sectionId !== targetSectionId,
+      );
+      targetSectionIssues.splice(targetIndex, 0, movedIssue);
+      return [...restOfIssues, ...targetSectionIssues];
+    });
+
+    // 2. API call to persist in DB
+    try {
+      await IssueApi.updateIssue(activeId, {
+        sectionId: targetSectionId,
+        position: targetIndex,
+      });
+
+      // 3. WebSocket broadcast to other users
+      send({
+        type: "issue:moved",
+        issueId: activeId,
+        fromSectionId,
+        toSectionId: targetSectionId,
+        newPosition: targetIndex,
+      });
+    } catch (error) {
+      console.error("Failed to move issue:", error);
+    }
+  };
+
+  // Create issue handler
+  const handleCreateIssue = async (sectionId: string, title: string) => {
+    try {
+      const newIssue = await IssueApi.createIssue(sectionId, { title });
+      setIssues((prev) => [...prev, newIssue]);
+      send({ type: "issue:created", issue: newIssue });
+    } catch (error) {
+      console.error("Failed to create issue:", error);
+    }
+  };
+
+  // Delete issue handler
+  const handleDeleteIssue = async (issueId: string) => {
+    try {
+      await IssueApi.deleteIssue(issueId);
+      setIssues((prev) => prev.filter((i) => i.id !== issueId));
+      send({ type: "issue:deleted", issueId });
+    } catch (error) {
+      console.error("Failed to delete issue:", error);
+    }
+  };
+
+  // Create section handler
   const handleCreateSection = async (title: string) => {
-    setSections((prev) => [
-      ...prev,
-      { id: Date.now().toString(), title, boardId: "1", position: prev.length },
-    ]);
-    setAddSectionOpen(false);
+    try {
+      const newSection = await SectionApi.createSection(boardId!, { title });
+      setSections((prev) => [...prev, newSection]);
+      send({ type: "section:created", section: newSection });
+      setAddSectionOpen(false);
+    } catch (error) {
+      console.error("Failed to create section:", error);
+    }
   };
 
   if (loading) {
@@ -160,7 +241,13 @@ export const BoardDetailPage = () => {
   }
 
   if (!board) {
-    return <div className="min-h-screen bg-background">Board not found</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-7xl px-6 py-10">
+          <div>Loading board...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -170,13 +257,19 @@ export const BoardDetailPage = () => {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{board.title}</h1>
-
             <p className="mt-1 text-sm text-muted-foreground">
               Organise your projects and collaborate with your team.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span
+                className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`}
+              />
+              {connected ? "Connected" : "Disconnected"}
+            </div>
+
             <Button
               className="border text-white bg-black cursor-pointer"
               onClick={() => setAddSectionOpen(true)}
@@ -193,25 +286,29 @@ export const BoardDetailPage = () => {
               Add Board
             </Button>
 
-            <BoardPresence boardId={boardId } />
+            <BoardPresence boardId={boardId} />
           </div>
         </div>
 
         {/* Sections Grid */}
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {sections.map((section) => (
-            <div key={section.id} className="w-[320px] min-w-[320px]">
-              <SectionColumn
-                section={section}
-                issues={DUMMY_ISSUES.filter(
-                  (issue) => issue.sectionId === section.id,
-                )}
-                orgId={orgId!}
-                boardId={board.id}
-              />
-            </div>
-          ))}
-        </div>
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {sections.map((section) => (
+              <div key={section.id} className="w-[320px] min-w-[320px]">
+                <SectionColumn
+                  section={section}
+                  issues={issues.filter(
+                    (issue) => issue.sectionId === section.id,
+                  )}
+                  orgId={orgId!}
+                  boardId={board.id}
+                  onCreateIssue={handleCreateIssue}
+                  onDeleteIssue={handleDeleteIssue}
+                />
+              </div>
+            ))}
+          </div>
+        </DndContext>
 
         {/* Empty state */}
         {sections.length === 0 && (
@@ -220,13 +317,10 @@ export const BoardDetailPage = () => {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <Building2 className="h-6 w-6 text-muted-foreground" />
               </div>
-
               <h2 className="text-lg font-semibold">No sections yet</h2>
-
               <p className="mt-1 text-sm text-muted-foreground">
                 Add your first section to start organising tasks.
               </p>
-
               <Button
                 variant="outline"
                 className="mt-6"
@@ -239,20 +333,18 @@ export const BoardDetailPage = () => {
           </Card>
         )}
 
-        {/* Delete Dialog */}
+        {/* Dialogs */}
         <DeleteDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           onConfirm={() => {}}
           isDeleting={false}
         />
-
         <CreateBoardDialog
           open={createOpen}
           onCreate={() => {}}
           onOpenChange={setCreateOpen}
         />
-
         <AddSectionDialog
           open={addSectionOpen}
           onOpenChange={setAddSectionOpen}

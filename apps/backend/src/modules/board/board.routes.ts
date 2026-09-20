@@ -2,7 +2,9 @@ import express from "express";
 import { validate } from "../../middleware/validate.middleware";
 import {
   boardIdParamsSchema,
+  boardOnlyIdSchema,
   createBoardSchema,
+  createSectionSchema,
   organisationIdParamSchema,
   updateBoardSchema,
 } from "shared";
@@ -40,4 +42,18 @@ router.delete(
   requireAuth,
   boardController.deleteBoard,
 );
+
+
+// sections routes
+
+router.get("/:boardId/sections", validate(boardOnlyIdSchema), requireAuth, boardController.getSections)
+
+router.post(
+  "/:boardId/sections",
+  requireAuth,
+  validate(boardOnlyIdSchema),
+  validate(createSectionSchema),
+  boardController.createSection,
+);
+
 export default router;
