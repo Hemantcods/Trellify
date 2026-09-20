@@ -17,7 +17,7 @@ type BoardPresenceProps = {
 };
 
 function getInitial(name: string) {
-  return name.trim().charAt(0).toUpperCase();
+  return (name ?? "").trim().charAt(0).toUpperCase() || "?";
 }
 
 export function BoardPresence({ boardId }: BoardPresenceProps) {

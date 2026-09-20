@@ -21,6 +21,9 @@ const BoardsPage = lazy(() =>
 const BoardDetailPage = lazy(() =>
   import("../features/board/pages/board-detail").then((m) => ({ default: m.BoardDetailPage }))
 );
+const IssueDetailPage = lazy(() =>
+  import("../features/board/pages/issue-detail").then((m) => ({ default: m.IssueDetailPage }))
+);
 const AcceptInvitePage = lazy(() => import("../features/invitations/pages/acceptInvite"));
 const OAuthSuccessPage = lazy(() => import("../features/auth/pages/OauthSuccess"));
 const OnboardingPage = lazy(() => import("../features/auth/pages/onboarding"));
@@ -53,6 +56,10 @@ export const AppRoutes = () => {
             <Route
               path="/organisations/:orgId/boards/:boardId"
               element={<BoardDetailPage />}
+            />
+            <Route
+              path="/organisations/:orgId/boards/:boardId/issues/:issueId"
+              element={<IssueDetailPage />}
             />
           </Route>
 

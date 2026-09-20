@@ -21,10 +21,8 @@ httpServer.on("upgrade", async (request, socket, head) => {
     }
     const payload = verifyAccessToken(accessToken);
     console.log("Authenticated user:", payload.userId);
-    // get the name
     const user = await findUser(payload.userId);
     if (!user) return;
-    // http upgrade
     wss.handleUpgrade(request, socket, head, (ws) => {
       const AuthenticatedWebSocket = ws as AuthenticatedWebSocket;
       AuthenticatedWebSocket.userId = payload.userId;
@@ -43,11 +41,25 @@ export interface AuthenticatedWebSocket extends WebSocket {
   userId: string;
   boardId?: string;
 }
+
 type RoomUser = {
   name: string;
   socket: AuthenticatedWebSocket;
 };
+
 const ROOMS: Record<string, RoomUser[]> = {};
+
+function broadcastToBoard(boardId: string, message: object, excludeSocket?: AuthenticatedWebSocket) {
+  const room = ROOMS[boardId];
+  if (!room) return;
+  const payload = JSON.stringify(message);
+  room.forEach(({ socket }) => {
+    if (socket !== excludeSocket && socket.readyState === WebSocket.OPEN) {
+      socket.send(payload);
+    }
+  });
+}
+
 wss.on("connection", (socket: AuthenticatedWebSocket, request: Request) => {
   console.log("WebSocket connected");
   console.log("User name:", socket.name);
@@ -62,6 +74,19 @@ wss.on("connection", (socket: AuthenticatedWebSocket, request: Request) => {
           if (socket.boardId) {
             leaveBoard(socket, socket.boardId);
           }
+          break;
+        // Board activity events - broadcast only (DB handled by Backend API)
+        case "issue:created":
+        case "issue:updated":
+        case "issue:deleted":
+        case "issue:moved":
+        case "section:created":
+        case "section:updated":
+        case "section:deleted":
+        case "section:reordered":
+        case "comment:created":
+        case "comment:deleted":
+          handleBoardActivity(socket, parsedData);
           break;
         default:
           socket.send(
@@ -97,12 +122,11 @@ async function joinBoard(socket: AuthenticatedWebSocket, boardId: string) {
   if (!ROOMS[boardId]) {
     ROOMS[boardId] = [];
   }
-  // check if already joined
   const alreadyJoined = ROOMS[boardId].some((user) => user.name === socket.name);
   if (alreadyJoined) {
     return;
   }
-  // notify the other users
+  // Notify other users
   ROOMS[boardId].forEach(({ socket: userSocket }) => {
     userSocket.send(
       JSON.stringify({
@@ -111,26 +135,31 @@ async function joinBoard(socket: AuthenticatedWebSocket, boardId: string) {
       }),
     );
   });
-  // add the user
+  // Add the user
   ROOMS[boardId].push({
     name: socket.name,
     socket,
   });
-  // send viewers to the newly joined user
+  // Set boardId on socket for disconnect cleanup
+  socket.boardId = boardId;
+  // Send current users to the newly joined user
   socket.send(
     JSON.stringify({
       type: "initial_state",
-      users: ROOMS[boardId].filter((user)=>user.socket!==socket).map(({ name }) => name),
+      users: ROOMS[boardId]
+        .filter((user) => user.socket !== socket)
+        .map(({ name }) => name),
     }),
   );
 }
+
 function leaveBoard(socket: AuthenticatedWebSocket, boardId: string) {
   const room = ROOMS[boardId];
   if (!room) return;
   const user = room.find((user) => user.socket === socket);
   if (!user) return;
   ROOMS[boardId] = room.filter((user) => user.socket !== socket);
-  // notify other users
+  // Notify other users
   ROOMS[boardId].forEach((user) => {
     user.socket.send(
       JSON.stringify({
@@ -139,9 +168,32 @@ function leaveBoard(socket: AuthenticatedWebSocket, boardId: string) {
       }),
     );
   });
-  // delete the empy room
+  // Delete empty room
   if (ROOMS[boardId].length === 0) {
     delete ROOMS[boardId];
   }
   socket.boardId = undefined;
+}
+
+function handleBoardActivity(socket: AuthenticatedWebSocket, data: any) {
+  if (!socket.boardId) {
+    socket.send(
+      JSON.stringify({
+        type: "error",
+        message: "Not connected to a board",
+      }),
+    );
+    return;
+  }
+
+  // Broadcast to all other users in the same board room
+  broadcastToBoard(
+    socket.boardId,
+    {
+      ...data,
+      userId: socket.userId,
+      userName: socket.name,
+    },
+    socket,
+  );
 }

@@ -6,6 +6,8 @@ import organisationRoutes from "./modules/organisation/organisation.routes"
 import boardRoutes from "./modules/board/board.routes"
 import invitationRoutes from "./modules/invitation/invitation.routes"
 import sectionRoutes from "./modules/section/section.routes"
+import issueRoutes from "./modules/issue/issue.routes"
+import commentRoutes from "./modules/comment/comment.routes"
 import { notFoundHandler } from "./middleware/notFound.middleware"
 import cookieParser from "cookie-parser"
 import { env } from "./config/env"
@@ -24,6 +26,8 @@ app.use("/api/organisation",organisationRoutes)
 app.use("/api/board", boardRoutes)
 app.use("/api/invitation",invitationRoutes)
 app.use("/api/section", sectionRoutes)
+app.use("/api/issue", issueRoutes)
+app.use("/api/comment", commentRoutes)
 // Not found middleware
 app.use(notFoundHandler)
 
