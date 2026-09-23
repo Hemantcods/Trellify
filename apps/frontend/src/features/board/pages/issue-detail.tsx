@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MessageSquare } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { IssueApi, type IssueDetail, type Comment } from "../issue.api";
+import { IssueApi, type IssueDetail } from "../issue.api";
 import { useBoardSocket } from "../hooks/useBoardSocket";
 import { CommentList } from "../components/comment-list";
 import { CommentInput } from "../components/comment-input";
@@ -14,7 +14,8 @@ export const IssueDetailPage = () => {
   const navigate = useNavigate();
   const [issue, setIssue] = useState<IssueDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
+  const [sending, setSending] = useState<'idle' | 'sending' | 'success' | 'failed'>('idle');
+  const [pendingComment, setPendingComment] = useState<string | null>(null);
 
   const { send, subscribe } = useBoardSocket(boardId || "");
 
@@ -68,18 +69,21 @@ export const IssueDetailPage = () => {
   // Create comment
   const handleCreateComment = async (content: string) => {
     if (!issue) return;
-    setSending(true);
+    setSending('sending');
+    setPendingComment(content);
     try {
       const comment = await IssueApi.createComment(issue.id, { content });
       setIssue((prev) => {
         if (!prev) return prev;
         return { ...prev, comments: [...prev.comments, comment] };
       });
+      setSending('success');
+      setPendingComment(null);
       send({ type: "comment:created", issueId: issue.id, comment });
     } catch (error) {
       console.error("Failed to create comment:", error);
-    } finally {
-      setSending(false);
+      setSending('failed');
+      setPendingComment(null);
     }
   };
 
@@ -174,9 +178,24 @@ export const IssueDetailPage = () => {
           <div className="mb-4 flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             <h2 className="text-sm font-semibold uppercase text-muted-foreground">
-              Comments ({issue.comments?.length ?? 0})
+              Comments({(issue.comments?.length ?? 0) + (pendingComment ? 1 : 0)})
             </h2>
           </div>
+
+          {/* Pending comment - shows immediately with sending/failed/success dot */}
+          {pendingComment && (
+            <div className="mb-3 flex items-start gap-3">
+              <Avatar className="h-6 w-6 shrink-0 flex-s-0">
+                <AvatarFallback className="text-xs">{pendingComment?.[0]?.toUpperCase() ?? '?'}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap capitalize">
+                  {pendingComment}
+                </p>
+                <span className="ml-2 h-2 w-2 rounded-full" style={{backgroundColor: sending === 'sending' ? '#a0a0a0' : sending === 'success' ? '#22c55e' : '#f87171'}} />
+              </div>
+            </div>
+          )}
 
           <CommentList
             comments={issue.comments ?? []}
@@ -184,7 +203,7 @@ export const IssueDetailPage = () => {
           />
 
           <div className="mt-4">
-            <CommentInput onSubmit={handleCreateComment} disabled={sending} />
+            <CommentInput onSubmit={handleCreateComment} disabled={sending !== 'idle'} />
           </div>
         </div>
       </div>
