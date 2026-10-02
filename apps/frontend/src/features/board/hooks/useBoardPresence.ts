@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getWsUrl } from "@/lib/ws";
 
 type PresenceUser = {
   name: string;
@@ -12,9 +13,9 @@ export function useBoardPresence(boardId: string) {
   const [connected, setConnected] = useState(false);
   useEffect(() => {
     if (!boardId) return;
-    const wsURL = import.meta.env.VITE_WS_URL;
+    const wsURL = getWsUrl();
     if (!wsURL) {
-      console.error("VITE_WS_URL is not configured");
+      console.error("WebSocket URL could not be resolved");
       return;
     }
     const socket = new WebSocket(wsURL);
@@ -31,6 +32,7 @@ export function useBoardPresence(boardId: string) {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log("Message")
         switch (data.type) {
           case "initial_state": {
             const initialUsers: PresenceUser[] = (data.users ?? []).map(
