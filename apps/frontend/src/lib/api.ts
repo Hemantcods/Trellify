@@ -1,6 +1,11 @@
 import axios from "axios";
 
-export const API_URL = import.meta.env.VITE_API_URL;
+const envApiUrl = import.meta.env.VITE_API_URL?.trim();
+
+export const API_URL =
+  envApiUrl && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(envApiUrl)
+    ? envApiUrl
+    : "/api";
 
 export const api = axios.create({
   baseURL: API_URL,

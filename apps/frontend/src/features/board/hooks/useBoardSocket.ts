@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { getWsUrl } from "@/lib/ws";
 
 type PresenceUser = {
   name: string;
@@ -33,9 +34,9 @@ export function useBoardSocket(boardId: string): BoardSocketState {
   useEffect(() => {
     if (!boardId) return;
 
-    const wsURL = import.meta.env.VITE_WS_URL;
+    const wsURL = getWsUrl();
     if (!wsURL) {
-      console.error("VITE_WS_URL is not configured");
+      console.error("WebSocket URL could not be resolved");
       return;
     }
 
