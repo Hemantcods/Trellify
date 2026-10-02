@@ -2,7 +2,7 @@ import app from "./app";
 
 import { env } from "./config/env";
 
-const startServer = () => {
+if (!process.env.VERCEL) {
   try {
     app.listen(env.PORT, () => {
       console.log(`Server running on port ${env.PORT}`);
@@ -11,5 +11,6 @@ const startServer = () => {
     console.error("Failed to start server:", error);
     process.exit(1);
   }
-};
-startServer()
+}
+
+export default app;
