@@ -10,7 +10,7 @@ import { CommentList } from "../components/comment-list";
 import { CommentInput } from "../components/comment-input";
 
 export const IssueDetailPage = () => {
-  const { orgId, boardId, issueId } = useParams();
+  const { boardId, issueId } = useParams();
   const navigate = useNavigate();
   const [issue, setIssue] = useState<IssueDetail | null>(null);
   const [loading, setLoading] = useState(true);

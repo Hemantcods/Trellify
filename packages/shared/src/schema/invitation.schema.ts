@@ -1,10 +1,12 @@
 import z from "zod";
 
-export enum InvitationStatus {
-  PENDING,
-  ACCEPTED,
-  EXPIRED,
-}
+export const InvitationStatus = {
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  EXPIRED: "EXPIRED",
+} as const;
+export type InvitationStatus =
+  (typeof InvitationStatus)[keyof typeof InvitationStatus];
 export type CreateInvitationInput = {
   userId: string;
   organisationId: string;

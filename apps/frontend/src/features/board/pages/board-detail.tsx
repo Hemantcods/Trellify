@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Building2, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { isValidUUID } from "@/lib/validation";
 import { DeleteDialog } from "../components/delete-Dialog";
 import { CreateBoardDialog } from "../components/create-dialog";
@@ -26,10 +26,8 @@ export const BoardDetailPage = () => {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
-  const navigate = useNavigate();
 
   const { users, connected, send, subscribe } = useBoardSocket(boardId || "");
   // Load board data from API
@@ -346,7 +344,7 @@ export const BoardDetailPage = () => {
         />
         <CreateBoardDialog
           open={createOpen}
-          onCreate={() => {}}
+          onCreate={async () => {}}
           onOpenChange={setCreateOpen}
         />
         <AddSectionDialog

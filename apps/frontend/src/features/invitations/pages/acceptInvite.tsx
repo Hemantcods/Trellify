@@ -22,7 +22,8 @@ export default function AcceptInvitePage() {
       navigate(`/organisations/${data.membership.organisationId}/boards`, {
         replace: true,
       });
-    } catch (error) {
+    } catch (err) {
+      const error = err as { response?: { message?: string } };
       setError(error?.response?.message || "Failed to accept invitation.");
     } finally {
       setAccepting(false)
