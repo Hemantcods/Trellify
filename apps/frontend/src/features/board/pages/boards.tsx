@@ -33,7 +33,7 @@ export const BoardsPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [manageMembersOpen, setManageMembersOpen] = useState(false);
   const navigate = useNavigate();
-  const { isOwner } = useOrganisationRole(orgId);
+  const { isOwner, canInvite } = useOrganisationRole(orgId);
 
   const handleDelete = async () => {
     if (!selectedDeleteId) return;
@@ -241,6 +241,7 @@ export const BoardsPage = () => {
             orgId={orgId!}
             open={manageMembersOpen}
             onOpenChange={setManageMembersOpen}
+            canInvite={canInvite}
           />
         )}
       </div>

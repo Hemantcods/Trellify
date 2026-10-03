@@ -6,6 +6,7 @@ import { isValidUUID } from "@/lib/validation";
 type UseOrganisationRoleResult = {
   role: MembershipRoles | null;
   isOwner: boolean;
+  canInvite: boolean;
   isLoading: boolean;
 };
 
@@ -66,6 +67,8 @@ export const useOrganisationRole = (
   return {
     role,
     isOwner: role === MembershipRoles.OWNER,
+    canInvite:
+      role === MembershipRoles.OWNER || role === MembershipRoles.ADMIN,
     isLoading: isCurrent ? state.isLoading : isValidUUID(orgId),
   };
 };
