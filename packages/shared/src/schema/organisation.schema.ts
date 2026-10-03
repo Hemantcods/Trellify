@@ -17,6 +17,36 @@ export const organisationIdParamSchema = z.object({
   organisationId: z.uuid("Invalid organisation ID"),
 });
 
+export const MembershipRoles = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  MEMBER: "MEMBER",
+} as const;
+
+export type MembershipRoles =
+  (typeof MembershipRoles)[keyof typeof MembershipRoles];
+
+export const organisationSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  role: z.enum(MembershipRoles),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type Organisation = z.infer<typeof organisationSchema>;
+
+export const organisationMemberSchema = z.object({
+  userId: z.uuid(),
+  name: z.string(),
+  email: z.email(),
+  role: z.enum(MembershipRoles),
+  joinedAt: z.string(),
+});
+
+export type OrganisationMember = z.infer<typeof organisationMemberSchema>;
+
 export const updateOrganisationSchema = z.object({
   name: z
     .string()

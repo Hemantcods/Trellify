@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BoardApi } from "../board.api";
 import { Button } from "@/components/ui/button";
-import { Building2, MoreVertical, Plus } from "lucide-react";
+import { Building2, MoreVertical, Plus, Users } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,6 +19,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { DeleteDialog } from "../components/delete-Dialog";
 import { CreateBoardDialog } from "../components/create-dialog";
 import { isValidUUID } from "@/lib/validation";
+import { ManageMembersDialog } from "@/features/organisation/components/manage-members-dialog";
+import { useOrganisationRole } from "@/features/organisation/hooks/useOrganisationRole";
 import type { Board } from "shared";
 
 export const BoardsPage = () => {
@@ -29,7 +31,9 @@ export const BoardsPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [manageMembersOpen, setManageMembersOpen] = useState(false);
   const navigate = useNavigate();
+  const { isOwner } = useOrganisationRole(orgId);
 
   const handleDelete = async () => {
     if (!selectedDeleteId) return;
@@ -220,6 +224,25 @@ export const BoardsPage = () => {
           onCreate={handleCreate}
           onOpenChange={setCreateOpen}
         />
+
+        {isOwner && (
+          <Button
+            variant="default"
+            className="fixed right-6 bottom-6 cursor-pointer shadow-lg"
+            onClick={() => setManageMembersOpen(true)}
+          >
+            <Users className="h-4 w-4" />
+            Manage Members
+          </Button>
+        )}
+
+        {isOwner && (
+          <ManageMembersDialog
+            orgId={orgId!}
+            open={manageMembersOpen}
+            onOpenChange={setManageMembersOpen}
+          />
+        )}
       </div>
     </div>
   );
