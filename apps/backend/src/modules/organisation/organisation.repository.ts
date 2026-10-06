@@ -38,6 +38,16 @@ export class OrganisationRepository {
       orderBy: {
         createdAt: "desc",
       },
+      include: {
+        memberships: {
+          where: {
+            userId,
+          },
+          select: {
+            role: true,
+          },
+        },
+      },
     });
   }
   async getOrgnisationById(userId: string, organisationId: string) {
@@ -47,6 +57,16 @@ export class OrganisationRepository {
         memberships: {
           some: {
             userId,
+          },
+        },
+      },
+      include: {
+        memberships: {
+          where: {
+            userId,
+          },
+          select: {
+            role: true,
           },
         },
       },

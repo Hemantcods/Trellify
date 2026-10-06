@@ -5,6 +5,7 @@ import {
   CreateOrganisationSchema,
   organisationIdParamSchema,
   updateOrganisationSchema,
+  organisationMemberSchema,
 } from "shared";
 import { organisationController } from "./organisation.container";
 
@@ -35,5 +36,11 @@ router.delete(
   requireAuth,
   validate(organisationIdParamSchema, "params"),
   organisationController.deleteOrg,
+);
+router.get(
+  "/:organisationId/members",
+  requireAuth,
+  validate(organisationIdParamSchema, "params"),
+  organisationController.getOrgMembers,
 );
 export default router;
