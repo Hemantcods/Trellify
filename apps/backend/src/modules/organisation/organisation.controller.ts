@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import { OrganisationService } from "./organisation.service";
+import { organisationMemberSchema } from "shared";
 
 export class OrganisationController {
   constructor(private readonly organisationService: OrganisationService) {}
@@ -57,6 +58,16 @@ export class OrganisationController {
     return res.status(200).json({
       success: true,
       message: "Organisation deleted successfully",
+    });
+  };
+  getOrgMembers = async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id!;
+    const organisationId = req.params.organisationId as string;
+    const members =
+      await this.organisationService.getOrgMembers(organisationId, userId);
+    return res.status(200).json({
+      success: true,
+      data: members,
     });
   };
 }
